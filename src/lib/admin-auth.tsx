@@ -6,9 +6,11 @@ const ADMIN_EMAIL = "admin@photoizzm.com"
 const ADMIN_PASSWORD = "photoizzm@2026"
 const SESSION_KEY = "photoizzm_admin_session"
 
+const TURNSTILE_SECRET_KEY = process.env.CLOUDFLARE_TURNSTILE_SECRET_KEY ?? ""
+
 interface AuthContextValue {
   isAuthenticated: boolean
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
+  login: (email: string, password: string, turnstileToken?: string) => Promise<{ success: boolean; error?: string }>
   logout: () => void
 }
 
@@ -22,7 +24,23 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
     if (session === "true") setIsAuthenticated(true)
   }, [])
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string, turnstileToken?: string) => {
+    if (TURNSTILE_SECRET_KEY && turnstileToken) {
+      try {
+        const verifyRes = await fetch("/api/verify-turnstile", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token: turnstileToken }),
+        })
+        const verifyData = await verifyRes.json()
+        if (!verifyData.success) {
+          return { success: false, error: "Verification failed. Please try again." }
+        }
+      } catch {
+        return { success: false, error: "Verification failed. Please try again." }
+      }
+    }
+
     await new Promise((r) => setTimeout(r, 700))
 
     if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {

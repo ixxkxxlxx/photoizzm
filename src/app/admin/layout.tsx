@@ -55,7 +55,7 @@ function AdminShell({ children }: { children: React.ReactNode }) {
               className="flex items-center gap-2 rounded-xl border border-border bg-secondary px-3 py-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:border-foreground/20 hover:bg-secondary hover:text-foreground"
             >
               <LogOut className="h-3.5 w-3.5" />
-              Log Keluar
+              Log Out
             </button>
           </div>
         </header>

@@ -1,9 +1,28 @@
 "use client"
 
-import { useState, type FormEvent } from "react"
+import { useState, type FormEvent, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
-import { Camera, Eye, EyeOff, Lock, Mail } from "lucide-react"
+import { Eye, EyeOff, Lock, Mail } from "lucide-react"
 import { useAdminAuth } from "@/lib/admin-auth"
+
+declare global {
+  interface Window {
+    turnstile?: {
+      render: (container: string | HTMLElement, options: {
+        sitekey: string
+        callback: (token: string) => void
+        "error-callback"?: () => void
+        "expired-callback"?: () => void
+        theme?: string
+      }) => string
+      reset: (widgetId: string) => void
+      remove: (widgetId: string) => void
+    }
+  }
+}
+
+const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY ?? ""
+const TURNSTILE_SECRET_KEY = process.env.CLOUDFLARE_TURNSTILE_SECRET_KEY ?? ""
 
 export default function AdminLoginPage() {
   const router = useRouter()
@@ -14,6 +33,57 @@ export default function AdminLoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [turnstileToken, setTurnstileToken] = useState("")
+  const [turnstileError, setTurnstileError] = useState("")
+  const turnstileRef = useRef<HTMLDivElement>(null)
+  const widgetIdRef = useRef<string>("")
+
+  useEffect(() => {
+    if (!TURNSTILE_SITE_KEY) return
+
+    const renderWidget = () => {
+      if (window.turnstile && turnstileRef.current && !widgetIdRef.current) {
+        widgetIdRef.current = window.turnstile.render(turnstileRef.current, {
+          sitekey: TURNSTILE_SITE_KEY,
+          callback: (token: string) => {
+            setTurnstileToken(token)
+            setTurnstileError("")
+          },
+          "error-callback": () => {
+            setTurnstileError("Turnstile verification failed.")
+          },
+          "expired-callback": () => {
+            setTurnstileToken("")
+          },
+          theme: "light",
+        })
+      }
+    }
+
+    // Reuse existing script tag if already injected (prevents double-append in React Strict Mode)
+    const existingScript = document.querySelector(
+      'script[src="https://challenges.cloudflare.com/turnstile/v0/api.js"]'
+    )
+    if (existingScript) {
+      // Script already loaded — render immediately if API ready
+      if (window.turnstile) renderWidget()
+      else existingScript.addEventListener("load", renderWidget)
+    } else {
+      const script = document.createElement("script")
+      script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js"
+      script.async = true
+      script.defer = true
+      script.onload = renderWidget
+      document.head.appendChild(script)
+    }
+
+    return () => {
+      if (widgetIdRef.current && window.turnstile) {
+        window.turnstile.remove(widgetIdRef.current)
+        widgetIdRef.current = ""
+      }
+    }
+  }, [])
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -21,15 +91,23 @@ export default function AdminLoginPage() {
 
     if (!email.trim()) { setError("Please enter your email."); return }
     if (!password.trim()) { setError("Please enter your password."); return }
+    if (TURNSTILE_SITE_KEY && !turnstileToken) {
+      setTurnstileError("Please complete the verification.")
+      return
+    }
 
     setIsLoading(true)
-    const result = await login(email.trim(), password)
+    const result = await login(email.trim(), password, turnstileToken)
     setIsLoading(false)
 
     if (result.success) {
       router.replace("/admin")
     } else {
       setError(result.error ?? "Login failed.")
+      if (window.turnstile && widgetIdRef.current) {
+        window.turnstile.reset(widgetIdRef.current)
+        setTurnstileToken("")
+      }
     }
   }
 
@@ -52,8 +130,13 @@ export default function AdminLoginPage() {
           {/* Brand mark */}
           <div className="mb-8 flex flex-col items-center gap-3 text-center">
             <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-foreground shadow-md">
-              <Camera className="h-7 w-7 text-primary-foreground" strokeWidth={1.5} />
+              <img
+                src="/logo.jpg"
+                alt="Logo"
+                className="h-10 w-10 rounded-full object-cover"
+              />
             </div>
+
             <div>
               <h1 className="font-serif text-2xl font-black tracking-tight text-foreground">
                 PHOTOIZZM
@@ -98,7 +181,7 @@ export default function AdminLoginPage() {
                   autoComplete="email"
                   value={email}
                   onChange={(e) => { setEmail(e.target.value); setError("") }}
-                  placeholder="admin@photoizzm.com"
+                  placeholder="email@example.com"
                   className="h-11 w-full rounded-xl border border-input bg-background pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground/60 focus:border-foreground focus:outline-none focus:ring-2 focus:ring-foreground/10 transition-all"
                 />
               </div>
@@ -130,6 +213,16 @@ export default function AdminLoginPage() {
                 </button>
               </div>
             </div>
+
+            {/* Turnstile */}
+            {TURNSTILE_SITE_KEY && (
+              <div className="flex flex-col gap-1.5">
+                <div ref={turnstileRef} className="flex justify-start" />
+                {turnstileError && (
+                  <p className="text-xs text-destructive">{turnstileError}</p>
+                )}
+              </div>
+            )}
 
             {/* Submit */}
             <button

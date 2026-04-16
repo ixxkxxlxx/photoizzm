@@ -1,324 +1,124 @@
-'use client';
+"use client"
 
-import { Suspense, useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
-import Link from 'next/link';
-import { Camera, ArrowLeft, Check } from 'lucide-react';
-import toast from 'react-hot-toast';
-
-const packages = [
-  {
-    id: 'prewedding',
-    name: 'Pre-Wedding',
-    price: 2500000,
-    duration: '4-6 hours',
-  },
-  {
-    id: 'wedding',
-    name: 'Wedding Day',
-    price: 5000000,
-    duration: 'Full day',
-  },
-  {
-    id: 'portrait',
-    name: 'Portrait',
-    price: 750000,
-    duration: '1-2 hours',
-  },
-  {
-    id: 'product',
-    name: 'Product',
-    price: 500000,
-    duration: '2-3 hours',
-  },
-];
-
-const timeSlots = [
-  '09:00',
-  '10:00',
-  '11:00',
-  '13:00',
-  '14:00',
-  '15:00',
-  '16:00',
-];
+import Link from "next/link"
+import Image from "next/image"
+import { Camera, Heart, Users, ArrowRight, GraduationCap } from "lucide-react"
 
 export default function BookingPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-gray-50 flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-pink-500"></div></div>}>
-      <BookingContent />
-    </Suspense>
-  );
-}
+    <main className="relative min-h-screen w-full overflow-hidden">
+      {/* Background Image with Overlay */}
+      <div className="absolute inset-0 z-0">
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: 'url("/images/booking-home.jpg")' }}
+        />
+        <div className="absolute inset-0 bg-[#1a1814]/70" />
+      </div>
 
-function BookingContent() {
-  const searchParams = useSearchParams();
-  const preselectedPackage = searchParams.get('package');
-
-  const [formData, setFormData] = useState({
-    customerName: '',
-    email: '',
-    phone: '',
-    packageName: preselectedPackage || '',
-    date: '',
-    time: '',
-    location: '',
-    notes: '',
-  });
-
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
-
-  useEffect(() => {
-    if (preselectedPackage) {
-      setFormData((prev) => ({ ...prev, packageName: preselectedPackage }));
-    }
-  }, [preselectedPackage]);
-
-  const selectedPkg = packages.find((p) => p.id === formData.packageName);
-
-  const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-
-    try {
-      const response = await fetch('/api/bookings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...formData,
-          totalPrice: selectedPkg?.price || 0,
-        }),
-      });
-
-      if (!response.ok) throw new Error('Failed to submit booking');
-
-      setIsSuccess(true);
-      toast.success('Booking submitted successfully!');
-    } catch (error) {
-      toast.error('Failed to submit booking. Please try again.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  if (isSuccess) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-        <div className="max-w-md w-full bg-white rounded-2xl shadow-lg p-8 text-center">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <Check className="w-8 h-8 text-green-600" />
+      <div className="relative z-10 mx-auto max-w-4xl px-3 sm:px-4 py-8 sm:py-12 md:py-16">
+        {/* Header */}
+        <header className="mb-8 sm:mb-10 flex flex-col items-center gap-3 sm:gap-4 text-center">
+          <div className="relative h-16 sm:h-20 md:h-24 w-16 sm:w-20 md:w-24 overflow-hidden rounded-full border-2 border-white/30 shadow-xl">
+            <Image
+              src="/logo.jpg"
+              alt="PHOTOIZZM Logo"
+              fill
+              className="object-cover"
+            />
           </div>
-          <h2 className="text-2xl font-bold mb-4">Booking Submitted!</h2>
-          <p className="text-gray-600 mb-6">
-            Thank you for your booking. We will contact you shortly to confirm
-            your appointment.
-          </p>
+          <div className="flex flex-col gap-1">
+            <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black leading-tight text-white text-balance">
+              Choose Your Service
+              <br />
+            </h1>
+            <p className="mt-1 sm:mt-2 text-xs sm:text-sm text-white/80 leading-relaxed">
+              Select the type of photography service you need
+            </p>
+          </div>
+        </header>
+
+        {/* Service Selection */}
+        <div className="grid gap-4 sm:gap-6 md:grid-cols-3">
+          <ServiceCard
+            icon={<GraduationCap className="h-6 w-6 sm:h-8 sm:w-8" strokeWidth={1.5} />}
+            title="Convocation"
+            description="Pre-convo, post-convo, and group sessions for your graduation day."
+            href="/booking/convocation"
+          />
+          <ServiceCard
+            icon={
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="sm:w-8 sm:h-8"
+              >
+                <path d="M12 7V3L15 4.5L12 6L9 4.5L12 3" />
+                <circle cx="12" cy="14" r="7" />
+              </svg>
+            }
+            title="Engagement"
+            description="Capture the joy of your engagement with beautiful photos."
+            href="/booking/engagement"
+          />
+          <div className="flex flex-col items-center justify-center rounded-2xl sm:rounded-3xl border border-dashed border-border bg-card/50 backdrop-blur-sm p-5 sm:p-8 text-center">
+            <div className="mb-4 sm:mb-6 flex h-12 sm:h-16 w-12 sm:w-16 items-center justify-center rounded-xl sm:rounded-2xl bg-muted text-muted-foreground">
+              <Users className="h-6 w-6 sm:h-8 sm:w-8" strokeWidth={1.5} />
+            </div>
+            <h3 className="font-serif text-lg sm:text-2xl font-bold text-foreground mb-2 sm:mb-3">Wedding</h3>
+            <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed mb-4 sm:mb-6">Full-day wedding photography with premium packages.</p>
+            <span className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-muted-foreground">
+              Coming Soon
+            </span>
+          </div>
+        </div>
+
+        {/* Back Link */}
+        <div className="mt-6 sm:mt-10 text-center">
           <Link
             href="/"
-            className="inline-block bg-pink-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-pink-600 transition-colors"
+            className="text-xs sm:text-sm font-medium text-white/80 hover:text-white transition-colors"
           >
-            Back to Home
+            &larr; Back to Home
           </Link>
         </div>
       </div>
-    );
-  }
+    </main>
+  )
+}
 
+function ServiceCard({
+  icon,
+  title,
+  description,
+  href,
+}: {
+  icon: React.ReactNode
+  title: string
+  description: string
+  href: string
+}) {
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center">
-          <Link href="/" className="flex items-center text-gray-600 hover:text-gray-900">
-            <ArrowLeft className="w-5 h-5 mr-2" />
-            Back
-          </Link>
-          <div className="flex items-center ml-auto">
-            <Camera className="w-6 h-6 text-pink-500 mr-2" />
-            <span className="font-semibold">Convo Photography</span>
-          </div>
-        </div>
-      </header>
-
-      {/* Form */}
-      <main className="max-w-4xl mx-auto px-4 py-12">
-        <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-          <div className="bg-gradient-to-r from-pink-500 to-purple-600 p-8 text-white">
-            <h1 className="text-3xl font-bold">Book Your Session</h1>
-            <p className="text-pink-100 mt-2">
-              Fill in the details below to book your photography session
-            </p>
-          </div>
-
-          <form onSubmit={handleSubmit} className="p-8 space-y-6">
-            {/* Package Selection */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Select Package *
-              </label>
-              <select
-                name="packageName"
-                value={formData.packageName}
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-              >
-                <option value="">Choose a package</option>
-                {packages.map((pkg) => (
-                  <option key={pkg.id} value={pkg.id}>
-                    {pkg.name} - Rp {pkg.price.toLocaleString('id-ID')}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {selectedPkg && (
-              <div className="bg-pink-50 rounded-lg p-4">
-                <p className="font-medium text-pink-800">{selectedPkg.name}</p>
-                <p className="text-pink-600">
-                  Duration: {selectedPkg.duration} | Price: Rp{' '}
-                  {selectedPkg.price.toLocaleString('id-ID')}
-                </p>
-              </div>
-            )}
-
-            {/* Personal Info */}
-            <div className="grid md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Full Name *
-                </label>
-                <input
-                  type="text"
-                  name="customerName"
-                  value={formData.customerName}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                  placeholder="John Doe"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email *
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                  placeholder="john@example.com"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Phone Number *
-                </label>
-                <input
-                  type="tel"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                  placeholder="+62 812 3456 7890"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Location *
-                </label>
-                <input
-                  type="text"
-                  name="location"
-                  value={formData.location}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                  placeholder="Studio or outdoor location"
-                />
-              </div>
-            </div>
-
-            {/* Date and Time */}
-            <div className="grid md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Preferred Date *
-                </label>
-                <input
-                  type="date"
-                  name="date"
-                  value={formData.date}
-                  onChange={handleChange}
-                  required
-                  min={new Date().toISOString().split('T')[0]}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Preferred Time *
-                </label>
-                <select
-                  name="time"
-                  value={formData.time}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                >
-                  <option value="">Select time</option>
-                  {timeSlots.map((slot) => (
-                    <option key={slot} value={slot}>
-                      {slot}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* Notes */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Additional Notes
-              </label>
-              <textarea
-                name="notes"
-                value={formData.notes}
-                onChange={handleChange}
-                rows={4}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                placeholder="Any special requests or details..."
-              />
-            </div>
-
-            {/* Submit */}
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full bg-gradient-to-r from-pink-500 to-purple-600 text-white py-4 rounded-lg font-semibold text-lg hover:from-pink-600 hover:to-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isSubmitting ? 'Submitting...' : 'Submit Booking'}
-            </button>
-          </form>
-        </div>
-      </main>
-    </div>
-  );
+    <Link
+      href={href}
+      className="group flex flex-col items-center rounded-2xl sm:rounded-3xl border border-border bg-card/50 backdrop-blur-sm p-5 sm:p-8 text-center transition-all hover:shadow-xl hover:-translate-y-1"
+    >
+      <div className="mb-4 sm:mb-6 flex h-12 sm:h-16 w-12 sm:w-16 items-center justify-center rounded-xl sm:rounded-2xl bg-foreground text-primary-foreground">
+        {icon}
+      </div>
+      <h3 className="font-serif text-lg sm:text-2xl font-bold text-foreground mb-2 sm:mb-3">{title}</h3>
+      <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed mb-4 sm:mb-6">{description}</p>
+      <span className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-foreground group-hover:gap-3 transition-all">
+        Book Now
+        <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4" />
+      </span>
+    </Link>
+  )
 }

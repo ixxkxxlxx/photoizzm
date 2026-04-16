@@ -46,10 +46,10 @@ interface AppearanceSettings {
 export default function SettingsPage() {
   const [business, setBusiness] = useState<BusinessSettings>({
     name: "PHOTOIZZM Photography",
-    tagline: "Convocation Photography Specialist",
-    email: "hello@photoizzm.com",
-    phone: "+60 12-345 6789",
-    whatsapp: "+60 12-345 6789",
+    tagline: "Freelance Photographer",
+    email: "izz@photoizzm.my",
+    phone: "+60 11-1422 7957",
+    whatsapp: "+60 11-1422 7957",
     instagram: "@photoizzm",
     address: "Puncak Alam, Selangor",
     operatingHours: "Monday – Saturday, 9:00am – 6:00pm",

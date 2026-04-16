@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Search, ChevronDown } from "lucide-react"
 import { cn } from "@/lib/utils"
-import type { Booking, BookingStatus } from "@/lib/admin-data"
+import type { Booking, BookingStatus, BookingCategory } from "@/lib/admin-data"
 import { BookingDetailModal } from "@/components/admin/booking-detail-modal"
 
 const STATUS_LABELS: Record<BookingStatus, string> = {
@@ -20,7 +20,20 @@ const STATUS_STYLES: Record<BookingStatus, string> = {
   cancelled: "bg-rose-100 text-rose-700 border border-rose-200",
 }
 
+const CATEGORY_LABELS: Record<BookingCategory, string> = {
+  convocation: "Convocation",
+  engagement: "Engagement",
+  wedding: "Wedding",
+}
+
+const CATEGORY_STYLES: Record<BookingCategory, string> = {
+  convocation: "bg-purple-100 text-purple-700 border border-purple-200",
+  engagement: "bg-pink-100 text-pink-700 border border-pink-200",
+  wedding: "bg-rose-100 text-rose-700 border border-rose-200",
+}
+
 const ALL_STATUSES: BookingStatus[] = ["pending", "confirmed", "completed", "cancelled"]
+const ALL_CATEGORIES: BookingCategory[] = ["convocation", "engagement", "wedding"]
 
 interface BookingsTableProps {
   bookings: Booking[]
@@ -31,6 +44,7 @@ export function BookingsTable({ bookings, onStatusChange }: BookingsTableProps) 
   const [search, setSearch] = useState("")
   const [filterStatus, setFilterStatus] = useState<BookingStatus | "all">("all")
   const [filterPackage, setFilterPackage] = useState<string>("all")
+  const [filterCategory, setFilterCategory] = useState<BookingCategory | "all">("all")
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
 
   const filtered = bookings.filter((b) => {
@@ -40,7 +54,8 @@ export function BookingsTable({ bookings, onStatusChange }: BookingsTableProps) 
       b.email.toLowerCase().includes(search.toLowerCase())
     const matchStatus = filterStatus === "all" || b.status === filterStatus
     const matchPackage = filterPackage === "all" || b.package === filterPackage
-    return matchSearch && matchStatus && matchPackage
+    const matchCategory = filterCategory === "all" || b.category === filterCategory
+    return matchSearch && matchStatus && matchPackage && matchCategory
   })
 
   const packages = Array.from(new Set(bookings.map((b) => b.package)))
@@ -92,6 +107,21 @@ export function BookingsTable({ bookings, onStatusChange }: BookingsTableProps) 
             <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
           </div>
 
+          {/* Category filter */}
+          <div className="relative">
+            <select
+              value={filterCategory}
+              onChange={(e) => setFilterCategory(e.target.value as BookingCategory | "all")}
+              className="h-9 appearance-none rounded-lg border border-border bg-background pl-3 pr-8 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              <option value="all">All Categories</option>
+              {ALL_CATEGORIES.map((c) => (
+                <option key={c} value={c}>{CATEGORY_LABELS[c]}</option>
+              ))}
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+          </div>
+
           <span className="ml-auto text-xs text-muted-foreground">
             {filtered.length} records
           </span>
@@ -102,7 +132,7 @@ export function BookingsTable({ bookings, onStatusChange }: BookingsTableProps) 
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border">
-                {["ID", "Name", "Package", "Date", "Location", "Amount", "Status", "Actions"].map((h) => (
+                {["ID", "Name", "Category", "Package", "Date", "Location", "Amount", "Status", "Actions"].map((h) => (
                   <th
                     key={h}
                     className="whitespace-nowrap px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
@@ -115,7 +145,7 @@ export function BookingsTable({ bookings, onStatusChange }: BookingsTableProps) 
             <tbody className="divide-y divide-border">
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-16 text-center text-sm text-muted-foreground">
+                  <td colSpan={9} className="py-16 text-center text-sm text-muted-foreground">
                     No records found.
                   </td>
                 </tr>
@@ -133,6 +163,16 @@ export function BookingsTable({ bookings, onStatusChange }: BookingsTableProps) 
                         <p className="font-semibold text-foreground leading-tight">{booking.name}</p>
                         <p className="text-xs text-muted-foreground">{booking.phone}</p>
                       </div>
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3">
+                      <span
+                        className={cn(
+                          "rounded-full px-2.5 py-1 text-xs font-semibold",
+                          CATEGORY_STYLES[booking.category]
+                        )}
+                      >
+                        {CATEGORY_LABELS[booking.category]}
+                      </span>
                     </td>
                     <td className="whitespace-nowrap px-4 py-3">
                       <span className="rounded-lg bg-secondary px-2 py-1 text-xs font-medium text-foreground">

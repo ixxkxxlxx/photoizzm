@@ -6,6 +6,7 @@ import { StatsCards } from "@/components/admin/stats-cards"
 import { RevenueChart } from "@/components/admin/revenue-chart"
 import { PackageBreakdown } from "@/components/admin/package-breakdown"
 import { BookingsTable } from "@/components/admin/bookings-table"
+import { UpcomingSessions } from "@/components/admin/upcoming-sessions"
 
 export default function AdminDashboard() {
   const [bookings, setBookings] = useState<Booking[]>([])
@@ -47,6 +48,9 @@ export default function AdminDashboard() {
 
       {/* Stats */}
       <StatsCards {...stats} />
+
+      {/* Upcoming Sessions */}
+      <UpcomingSessions />
 
       {/* Charts row */}
       <div className="grid gap-4 lg:grid-cols-3">

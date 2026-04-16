@@ -1,4 +1,5 @@
 export type BookingStatus = "pending" | "confirmed" | "completed" | "cancelled"
+export type BookingCategory = "convocation" | "engagement" | "wedding"
 
 export interface Booking {
   id: string
@@ -6,6 +7,7 @@ export interface Booking {
   phone: string
   email: string
   university: string
+  category: BookingCategory
   package: string
   date: string
   sessionTime: string
@@ -24,6 +26,7 @@ export function mapApiBooking(row: Record<string, unknown>): Booking {
     phone: row.phone as string,
     email: row.email as string,
     university: (row.university as string) ?? "",
+    category: (row.category as BookingCategory) ?? "convocation",
     package: row.packageName as string,
     date: row.date as string,
     sessionTime: row.time as string,
