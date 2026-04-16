@@ -15,6 +15,7 @@
   "dependencies": {
     "@fontsource/delicious-handrawn": "^5.2.8",
     "@hookform/resolvers": "^3.9.1",
+    "@libsql/client": "^0.17.2",
     "@prisma/client": "^5.22.0",
     "@radix-ui/react-accordion": "1.2.12",
     "@radix-ui/react-alert-dialog": "1.1.15",
