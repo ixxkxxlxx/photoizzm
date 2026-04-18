@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Poppins, Open_Sans } from 'next/font/google'
 import '@fontsource/delicious-handrawn'
 import './globals.css'
+import { SpeedInsights } from '@vercel/speed-insights/next'
 
 const poppins = Poppins({ 
   weight: ['400', '500', '600', '700'],
@@ -48,6 +49,7 @@ export default function RootLayout({
     <html lang="ms" className={`${poppins.variable} ${openSans.variable}`} style={{ '--font-script': 'Delicious Handrawn, cursive' } as React.CSSProperties}>
       <body className="font-sans antialiased">
         {children}
+        <SpeedInsights />
       </body>
     </html>
   )
