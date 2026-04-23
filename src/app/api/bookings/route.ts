@@ -95,13 +95,10 @@ export async function POST(request: NextRequest) {
 
 export async function GET() {
   try {
-    console.log('Fetching bookings from Supabase...')
     const { data: bookings, error } = await supabase
       .from('bookings')
       .select('*')
       .order('created_at', { ascending: false })
-
-    console.log('Bookings result:', { count: bookings?.length, error })
 
     if (error) throw error
 
