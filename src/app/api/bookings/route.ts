@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { supabase } from '@/lib/supabase';
+import { sendBookingNotification, type BookingEmailData } from '@/lib/email';
 
 const CATEGORY_PREFIX: Record<string, string> = {
   convocation: 'CONV',
@@ -7,17 +8,7 @@ const CATEGORY_PREFIX: Record<string, string> = {
   wedding: 'WED',
 }
 
-async function generateBookingId(category: string): Promise<string> {
-  const prefix = CATEGORY_PREFIX[category] ?? 'BKG'
-
-  // Count all bookings for this category to get the next sequence number
-  const count = await prisma.booking.count({
-    where: { category },
-  })
-
-  const seq = String(count + 1).padStart(3, '0')
-  return `${prefix}-${seq}`
-}
+export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   try {
@@ -39,30 +30,58 @@ export async function POST(request: NextRequest) {
 
     const resolvedCategory = category || 'convocation'
 
-    // Generate ID and create booking in a transaction to prevent race conditions
-    const booking = await prisma.$transaction(async (tx) => {
-      const count = await tx.booking.count({ where: { category: resolvedCategory } })
-      const prefix = CATEGORY_PREFIX[resolvedCategory] ?? 'BKG'
-      const id = `${prefix}-${String(count + 1).padStart(3, '0')}`
+    const { data: existingBookings } = await supabase
+      .from('bookings')
+      .select('id')
+      .eq('category', resolvedCategory)
+    
+    const count = existingBookings?.length ?? 0
+    const prefix = CATEGORY_PREFIX[resolvedCategory] ?? 'BKG'
+    const id = `${prefix}-${String(count + 1).padStart(3, '0')}`
 
-      return tx.booking.create({
-        data: {
-          id,
-          category: resolvedCategory,
-          customerName,
-          email,
-          phone,
-          packageName,
-          university: university || '',
-          date: new Date(date),
-          time,
-          location,
-          pax: pax ? Number(pax) : null,
-          notes: notes || null,
-          totalPrice,
-        },
+    const { data: booking, error } = await supabase
+      .from('bookings')
+      .insert({
+        id,
+        category: resolvedCategory,
+        customer_name: customerName,
+        email,
+        phone,
+        package_name: packageName,
+        university: university || '',
+        date: new Date(date).toISOString(),
+        time,
+        location,
+        pax: pax ? Number(pax) : null,
+        notes: notes || null,
+        total_price: totalPrice,
+        status: 'pending',
       })
-    })
+      .select()
+      .single()
+
+    if (error) throw error
+
+    try {
+      const emailData: BookingEmailData = {
+        id: booking.id,
+        category: booking.category,
+        customerName: booking.customer_name,
+        email: booking.email,
+        phone: booking.phone,
+        packageName: booking.package_name,
+        university: booking.university,
+        date: new Date(booking.date).toLocaleDateString('ms-MY'),
+        time: booking.time,
+        location: booking.location,
+        pax: booking.pax,
+        notes: booking.notes,
+        totalPrice: booking.total_price,
+      };
+      await sendBookingNotification(emailData);
+    } catch (emailError) {
+      console.error('Email notification error:', emailError);
+    }
 
     return NextResponse.json(booking, { status: 201 });
   } catch (error) {
@@ -76,10 +95,17 @@ export async function POST(request: NextRequest) {
 
 export async function GET() {
   try {
-    const bookings = await prisma.booking.findMany({
-      orderBy: { createdAt: 'desc' },
-    });
-    return NextResponse.json(bookings);
+    console.log('Fetching bookings from Supabase...')
+    const { data: bookings, error } = await supabase
+      .from('bookings')
+      .select('*')
+      .order('created_at', { ascending: false })
+
+    console.log('Bookings result:', { count: bookings?.length, error })
+
+    if (error) throw error
+
+    return NextResponse.json(bookings || []);
   } catch (error) {
     console.error('Fetch bookings error:', error);
     return NextResponse.json(

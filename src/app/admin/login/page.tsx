@@ -39,7 +39,7 @@ export default function AdminLoginPage() {
   const widgetIdRef = useRef<string>("")
 
   useEffect(() => {
-    if (!TURNSTILE_SITE_KEY) return
+    if (!TURNSTILE_SITE_KEY || process.env.NODE_ENV === "development") return
 
     const renderWidget = () => {
       if (window.turnstile && turnstileRef.current && !widgetIdRef.current) {
@@ -91,7 +91,7 @@ export default function AdminLoginPage() {
 
     if (!email.trim()) { setError("Please enter your email."); return }
     if (!password.trim()) { setError("Please enter your password."); return }
-    if (TURNSTILE_SITE_KEY && !turnstileToken) {
+    if (TURNSTILE_SITE_KEY && process.env.NODE_ENV !== "development" && !turnstileToken) {
       setTurnstileError("Please complete the verification.")
       return
     }

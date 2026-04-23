@@ -1,10 +1,11 @@
 "use client"
 
 import { useState } from "react"
-import { Search, ChevronDown } from "lucide-react"
+import { Search, ChevronDown, Pencil } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { Booking, BookingStatus, BookingCategory } from "@/lib/admin-data"
 import { BookingDetailModal } from "@/components/admin/booking-detail-modal"
+import { EditBookingModal } from "@/components/admin/edit-booking-modal"
 
 const STATUS_LABELS: Record<BookingStatus, string> = {
   pending: "Pending",
@@ -38,14 +39,17 @@ const ALL_CATEGORIES: BookingCategory[] = ["convocation", "engagement", "wedding
 interface BookingsTableProps {
   bookings: Booking[]
   onStatusChange: (id: string, status: BookingStatus) => void
+  onEdit?: (id: string, data: Partial<Booking>) => Promise<void>
+  onBookingsChange?: (bookings: Booking[]) => void
 }
 
-export function BookingsTable({ bookings, onStatusChange }: BookingsTableProps) {
+export function BookingsTable({ bookings, onStatusChange, onEdit, onBookingsChange }: BookingsTableProps) {
   const [search, setSearch] = useState("")
   const [filterStatus, setFilterStatus] = useState<BookingStatus | "all">("all")
   const [filterPackage, setFilterPackage] = useState<string>("all")
   const [filterCategory, setFilterCategory] = useState<BookingCategory | "all">("all")
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
+  const [editingBooking, setEditingBooking] = useState<Booking | null>(null)
 
   const filtered = bookings.filter((b) => {
     const matchSearch =
@@ -132,7 +136,7 @@ export function BookingsTable({ bookings, onStatusChange }: BookingsTableProps) 
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border">
-                {["ID", "Name", "Category", "Package", "Date", "Location", "Amount", "Status", "Actions"].map((h) => (
+                {["ID", "Name", "Category", "Package", "Date", "Location", "Amount", "Transport", "Status", "Actions"].map((h) => (
                   <th
                     key={h}
                     className="whitespace-nowrap px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
@@ -145,7 +149,7 @@ export function BookingsTable({ bookings, onStatusChange }: BookingsTableProps) 
             <tbody className="divide-y divide-border">
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="py-16 text-center text-sm text-muted-foreground">
+                  <td colSpan={10} className="py-16 text-center text-sm text-muted-foreground">
                     No records found.
                   </td>
                 </tr>
@@ -190,7 +194,10 @@ export function BookingsTable({ bookings, onStatusChange }: BookingsTableProps) 
                       {booking.location}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 font-serif font-bold text-foreground">
-                      RM {booking.amount}
+                      RM {booking.amount + booking.transportationFee}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">
+                      {booking.transportationFee > 0 ? `RM ${booking.transportationFee}` : "—"}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3">
                       <span
@@ -204,6 +211,15 @@ export function BookingsTable({ bookings, onStatusChange }: BookingsTableProps) 
                     </td>
                     <td className="whitespace-nowrap px-4 py-3">
                       <div className="flex items-center gap-2">
+                        {onEdit && (
+                          <button
+                            onClick={() => setEditingBooking(booking)}
+                            className="rounded-lg border border-border p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+                            title="Edit"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </button>
+                        )}
                         <button
                           onClick={() => setSelectedBooking(booking)}
                           className="rounded-lg border border-border px-2.5 py-1 text-xs font-medium text-foreground hover:bg-secondary transition-colors"
@@ -242,6 +258,22 @@ export function BookingsTable({ bookings, onStatusChange }: BookingsTableProps) 
           onStatusChange={(status) => {
             onStatusChange(selectedBooking.id, status)
             setSelectedBooking({ ...selectedBooking, status })
+          }}
+        />
+      )}
+
+      {editingBooking && onEdit && (
+        <EditBookingModal
+          booking={editingBooking}
+          onClose={() => setEditingBooking(null)}
+          onSave={async (data) => {
+            await onEdit(editingBooking.id, data)
+            if (onBookingsChange) {
+              const updatedBookings = bookings.map((b) => 
+                b.id === editingBooking.id ? { ...b, ...data } : b
+              )
+              onBookingsChange(updatedBookings)
+            }
           }}
         />
       )}

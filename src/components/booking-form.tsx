@@ -424,7 +424,8 @@ function SuccessScreen({
       <Button
         onClick={onReset}
         variant="outline"
-        className="mt-2 rounded-2xl border-[#d4af37]/50 font-semibold text-white hover:bg-[#d4af37]/20"
+        className="mt-2 rounded-2xl border-[#000]/50 font-semibold text-black hover:bg-[#d4af37]/20"
+   
       >
         Make New Booking
       </Button>

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { supabase } from '@/lib/supabase';
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -11,20 +13,23 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const booking = await prisma.booking.findUnique({ where: { bookingNumber } });
+    const { data: booking, error } = await supabase
+      .from('bookings')
+      .select('*')
+      .eq('id', bookingNumber)
+      .single();
 
-    if (!booking) {
+    if (error || !booking) {
       return NextResponse.json({ error: 'Booking not found' }, { status: 404 });
     }
 
     const pdfDoc = await PDFDocument.create();
-    const page = pdfDoc.addPage([595.28, 841.89]); // A4 size
+    const page = pdfDoc.addPage([595.28, 841.89]);
     const { width, height } = page.getSize();
     
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
     const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-    // Header
     page.drawText('INVOICE', {
       x: 50,
       y: height - 80,
@@ -33,7 +38,7 @@ export async function GET(request: NextRequest) {
       color: rgb(0.13, 0.13, 0.13),
     });
 
-    page.drawText(`Booking No: ${booking.bookingNumber}`, {
+    page.drawText(`Booking No: ${booking.id}`, {
       x: width - 200,
       y: height - 80,
       size: 10,
@@ -64,7 +69,6 @@ export async function GET(request: NextRequest) {
       color: rgb(0.4, 0.4, 0.4),
     });
 
-    // Invoice details
     const dateStr = new Date().toLocaleDateString('en-MY', {
       year: 'numeric',
       month: 'long',
@@ -77,7 +81,6 @@ export async function GET(request: NextRequest) {
       font: font,
     });
 
-    // Divider
     page.drawLine({
       start: { x: 50, y: height - 160 },
       end: { x: width - 50, y: height - 160 },
@@ -85,7 +88,6 @@ export async function GET(request: NextRequest) {
       color: rgb(0.85, 0.85, 0.85),
     });
 
-    // Bill To
     page.drawText('Bill To:', {
       x: 50,
       y: height - 190,
@@ -94,7 +96,7 @@ export async function GET(request: NextRequest) {
       color: rgb(0.5, 0.5, 0.5),
     });
 
-    page.drawText(booking.customerName, {
+    page.drawText(booking.customer_name, {
       x: 50,
       y: height - 205,
       size: 12,
@@ -118,7 +120,6 @@ export async function GET(request: NextRequest) {
       color: rgb(0.4, 0.4, 0.4),
     });
 
-    // Booking Details
     page.drawText('Booking Details:', {
       x: 50,
       y: height - 280,
@@ -129,7 +130,7 @@ export async function GET(request: NextRequest) {
 
     const details = [
       ['Category:', booking.category.charAt(0).toUpperCase() + booking.category.slice(1)],
-      ['Package:', booking.packageName],
+      ['Package:', booking.package_name],
       ['Date:', new Date(booking.date).toLocaleDateString('en-MY')],
       ['Time:', booking.time || 'Not specified'],
       ['Location:', booking.location],
@@ -156,7 +157,6 @@ export async function GET(request: NextRequest) {
       yPos -= 18;
     });
 
-    // Notes
     if (booking.notes) {
       page.drawText('Notes:', {
         x: 50,
@@ -175,7 +175,6 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Total
     yPos = height - 480;
     page.drawLine({
       start: { x: 50, y: yPos },
@@ -192,7 +191,7 @@ export async function GET(request: NextRequest) {
       color: rgb(0.13, 0.13, 0.13),
     });
 
-    page.drawText(`RM ${booking.totalPrice.toFixed(2)}`, {
+    page.drawText(`RM ${Number(booking.total_price).toFixed(2)}`, {
       x: width - 150,
       y: yPos - 25,
       size: 14,
@@ -200,7 +199,6 @@ export async function GET(request: NextRequest) {
       color: rgb(0.13, 0.13, 0.13),
     });
 
-    // Status
     const statusColor = booking.status === 'confirmed' ? rgb(0, 0.6, 0) : 
                        booking.status === 'completed' ? rgb(0, 0.5, 0.8) :
                        booking.status === 'cancelled' ? rgb(0.8, 0, 0) : rgb(0.8, 0.6, 0);
@@ -213,7 +211,6 @@ export async function GET(request: NextRequest) {
       color: statusColor,
     });
 
-    // Footer
     page.drawText('Thank you for your business!', {
       x: 50,
       y: 50,
@@ -235,7 +232,7 @@ export async function GET(request: NextRequest) {
     return new NextResponse(pdfBytes, {
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="Invoice-${booking.customerName.replace(/\s+/g, '-')}.pdf"`,
+        'Content-Disposition': `attachment; filename="Invoice-${booking.customer_name.replace(/\s+/g, '-')}.pdf"`,
       },
     });
   } catch (error) {

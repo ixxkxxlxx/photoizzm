@@ -18,7 +18,7 @@ const openSans = Open_Sans({
 const delicious = 'Delicious Handrawn'
 
 export const metadata: Metadata = {
-  title: 'PHOTOIZZM Photography – Booking Form',
+  title: 'PHOTOIZZM Photography',
   description: 'Book your convocation photography slot with PHOTOIZZM Photography. Preconvo Classic, Postconvo Classic & Forever Us packages available.',
   icons: {
     icon: [

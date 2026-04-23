@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Camera, LayoutDashboard, CalendarDays, BarChart2, Settings, X } from "lucide-react"
+import { Camera, LayoutDashboard, CalendarDays, BarChart2, Settings, X, LogOut } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const NAV_ITEMS = [
@@ -20,9 +20,13 @@ interface AdminSidebarProps {
 export function AdminSidebar({ open, onClose }: AdminSidebarProps) {
   const pathname = usePathname()
 
+  const handleLogout = () => {
+    document.cookie = "next-auth.session-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC"
+    window.location.href = "/admin/login"
+  }
+
   return (
     <>
-      {/* Mobile overlay */}
       {open && (
         <div
           className="fixed inset-0 z-20 bg-foreground/40 lg:hidden"
@@ -37,9 +41,8 @@ export function AdminSidebar({ open, onClose }: AdminSidebarProps) {
           open ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        {/* Logo */}
         <div className="flex h-16 items-center justify-between border-b border-border px-5">
-          <Link href="/" className="flex items-center gap-2.5">
+          <Link href="/admin" className="flex items-center gap-2.5">
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-foreground">
               <Camera className="h-4 w-4 text-primary-foreground" strokeWidth={1.5} />
             </div>
@@ -59,7 +62,6 @@ export function AdminSidebar({ open, onClose }: AdminSidebarProps) {
           </button>
         </div>
 
-        {/* Nav */}
         <nav className="flex flex-1 flex-col gap-1 p-3">
           {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
             const active = pathname === href
@@ -82,15 +84,14 @@ export function AdminSidebar({ open, onClose }: AdminSidebarProps) {
           })}
         </nav>
 
-        {/* Footer */}
-        <div className="border-t border-border p-4">
-          <Link
-            href="/"
-            className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
+        <div className="border-t border-border p-3">
+          <button
+            onClick={handleLogout}
+            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
           >
-            <Camera className="h-3.5 w-3.5" />
-            View Booking Form
-          </Link>
+            <LogOut className="h-4 w-4 shrink-0" />
+            Log Out
+          </button>
         </div>
       </aside>
     </>

@@ -1,21 +1,24 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { supabase } from '@/lib/supabase';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const bookings = await prisma.booking.findMany({
-      where: {
-        date: { gte: today },
-        status: { in: ['pending', 'confirmed'] },
-      },
-      orderBy: { date: 'asc' },
-      take: 5,
-    });
+    const { data: bookings, error } = await supabase
+      .from('bookings')
+      .select('*')
+      .gte('date', today.toISOString())
+      .in('status', ['pending', 'confirmed'])
+      .order('date', { ascending: true })
+      .limit(5)
 
-    return NextResponse.json(bookings);
+    if (error) throw error
+
+    return NextResponse.json(bookings || []);
   } catch (error) {
     console.error('Upcoming bookings error:', error);
     return NextResponse.json(

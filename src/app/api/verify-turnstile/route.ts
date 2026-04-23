@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server"
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: Request) {
+  if (process.env.NODE_ENV === 'development') {
+    return NextResponse.json({ success: true })
+  }
+
   const { token } = await request.json()
   const secretKey = process.env.CLOUDFLARE_TURNSTILE_SECRET_KEY
 

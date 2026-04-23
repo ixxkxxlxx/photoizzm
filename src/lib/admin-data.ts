@@ -14,6 +14,7 @@ export interface Booking {
   location: string
   pax?: number
   amount: number
+  transportationFee: number
   status: BookingStatus
   createdAt: string
   notes?: string
@@ -22,19 +23,20 @@ export interface Booking {
 export function mapApiBooking(row: Record<string, unknown>): Booking {
   return {
     id: row.id as string,
-    name: row.customerName as string,
+    name: (row.customer_name as string) ?? "",
     phone: row.phone as string,
     email: row.email as string,
     university: (row.university as string) ?? "",
     category: (row.category as BookingCategory) ?? "convocation",
-    package: row.packageName as string,
+    package: (row.package_name as string) ?? "",
     date: row.date as string,
-    sessionTime: row.time as string,
-    location: row.location as string,
+    sessionTime: (row.time as string) ?? "",
+    location: (row.location as string) ?? "",
     pax: (row.pax as number) ?? undefined,
-    amount: row.totalPrice as number,
+    amount: (row.total_price as number) ?? 0,
+    transportationFee: (row.transportation_fee as number) ?? 0,
     status: (row.status as BookingStatus) ?? "pending",
-    createdAt: row.createdAt as string,
+    createdAt: (row.created_at as string) ?? "",
     notes: (row.notes as string) ?? undefined,
   }
 }
@@ -58,6 +60,35 @@ export async function updateBookingStatus(
   if (!res.ok) throw new Error("Failed to update booking")
 }
 
+export interface UpdateBookingData {
+  customerName?: string
+  email?: string
+  phone?: string
+  packageName?: string
+  university?: string
+  date?: string
+  time?: string
+  location?: string
+  pax?: number
+  notes?: string
+  transportationFee?: number
+  totalPrice?: number
+}
+
+export async function updateBookingDetails(
+  id: string,
+  data: UpdateBookingData
+): Promise<Booking> {
+  const res = await fetch(`/api/bookings/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  })
+  if (!res.ok) throw new Error("Failed to update booking")
+  const row = await res.json()
+  return mapApiBooking(row)
+}
+
 export const MONTHLY_REVENUE = [
   { month: "Jan", revenue: 0 },
   { month: "Feb", revenue: 0 },
@@ -75,7 +106,7 @@ export function getStats(bookings: Booking[]) {
   const cancelled = bookings.filter((b) => b.status === "cancelled").length
   const revenue = bookings
     .filter((b) => b.status === "completed" || b.status === "confirmed")
-    .reduce((sum, b) => sum + b.amount, 0)
+    .reduce((sum, b) => sum + b.amount + b.transportationFee, 0)
 
   return { total, pending, confirmed, completed, cancelled, revenue }
 }

@@ -104,11 +104,21 @@ export function BookingDetailModal({ booking, onClose, onStatusChange }: Booking
           <Row label="Session Time" value={booking.sessionTime} />
           <Row label="Location" value={booking.location} />
           {booking.pax && <Row label="Number of Pax" value={`${booking.pax} pax`} />}
+          {booking.transportationFee > 0 && (
+            <Row
+              label="Transportation"
+              value={
+                <span className="font-medium text-foreground">
+                  RM {booking.transportationFee}
+                </span>
+              }
+            />
+          )}
           <Row
-            label="Amount"
+            label="Total Amount"
             value={
               <span className="font-serif font-black text-foreground text-base">
-                RM {booking.amount}
+                RM {booking.amount + booking.transportationFee}
               </span>
             }
           />

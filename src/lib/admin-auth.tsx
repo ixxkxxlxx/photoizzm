@@ -10,6 +10,7 @@ const TURNSTILE_SECRET_KEY = process.env.CLOUDFLARE_TURNSTILE_SECRET_KEY ?? ""
 
 interface AuthContextValue {
   isAuthenticated: boolean
+  isInitialized: boolean
   login: (email: string, password: string, turnstileToken?: string) => Promise<{ success: boolean; error?: string }>
   logout: () => void
 }
@@ -18,10 +19,12 @@ const AuthContext = createContext<AuthContextValue | null>(null)
 
 export function AdminAuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [isInitialized, setIsInitialized] = useState(false)
 
   useEffect(() => {
     const session = sessionStorage.getItem(SESSION_KEY)
     if (session === "true") setIsAuthenticated(true)
+    setIsInitialized(true)
   }, [])
 
   const login = async (email: string, password: string, turnstileToken?: string) => {
@@ -58,7 +61,7 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, isInitialized, login, logout }}>
       {children}
     </AuthContext.Provider>
   )
