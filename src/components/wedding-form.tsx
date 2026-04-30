@@ -214,7 +214,7 @@ export function WeddingForm() {
                   {pkg.features.map((f) => (
                     <li key={f} className="flex items-start gap-2">
                       <Heart className={cn("h-3.5 w-3.5 shrink-0 mt-0.5", selected ? "text-[#d4af37]" : "text-[#d4af37]/70")} />
-                      <span className="leading-snug text-white/80">{f}</span>
+                      <span className={cn("leading-3", selected ? "text-white" : "text-white/90")}>{f}</span>
                     </li>
                   ))}
                 </ul>

@@ -18,7 +18,7 @@ export const ENGAGEMENT_PACKAGES = [
   {
     id: "engagement-memoir",
     name: "Memoir",
-    price: "RM300",
+    price: "RM350",
     features: ["Indoor only", "3 hour session", "Unlimited shots", "All edited photos", "Softcopy via Google Photos"],
   },
   {
@@ -183,7 +183,7 @@ export function EngagementForm() {
                           "h-1.5 w-1.5 rounded-full shrink-0",
                           selected ? "bg-[#FFAB91]" : "bg-white/30"
                         )} />
-                        <span className="font-light leading-tight">
+                        <span className={cn("font-light leading-tight", selected ? "text-white" : "text-white/80")}>
                           {f}
                         </span>
                       </li>
@@ -228,6 +228,10 @@ export function EngagementForm() {
           })}
         </div>
         {errors.package && <p className="text-xs text-[#e57373]">{errors.package}</p>}
+
+        <p className="text-xs text-[#fff7ed] italic mt-1">
+          *Price includes travel costs for the entire KL & Selangor area.
+        </p>
       </section>
 
       <section className="flex flex-col gap-3 sm:gap-4">

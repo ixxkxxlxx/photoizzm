@@ -117,7 +117,7 @@ export function PackageSelector({ value, onChange }: PackageSelectorProps) {
                       selected ? "text-[#d4af37]" : "text-[#d4af37]/70"
                     )}
                   />
-                  <span className={cn("leading-snug text-white/80")}>{f}</span>
+                  <span className={cn("leading-snug", selected ? "text-white" : "text-white/90")}>{f}</span>
                 </li>
               ))}
             </ul>
